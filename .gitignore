@@ -1,0 +1,94 @@
+# Environment variables (CRITICAL: Never commit these!)
+.env
+*.env
+.env.local
+.env.*.local
+
+# SSH Keys (CRITICAL: Never commit private keys!)
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+id_ecdsa
+id_ecdsa.pub
+*.pem
+*.key
+*.pub
+~/.ssh/
+.ssh/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Output files
+output/
+
+# Data directories
+data/
+*.sqlite
+*.sqlite3
+
+# Panel configurations (contains sensitive credentials)
+panels.yaml
+config.yaml
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Docker volumes
+volumes/
+
+294/
+
+config.yaml
