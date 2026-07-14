@@ -95,9 +95,10 @@ sync_repo() {
     if [ -d "$WORK_DIR/.git" ]; then
         step "Обновление репозитория..."
         cd "$WORK_DIR"
+        BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
         git fetch origin >> "$LOG_FILE" 2>&1
-        git reset --hard origin/main >> "$LOG_FILE" 2>&1
-        ok "Репозиторий обновлён"
+        git reset --hard "origin/${BRANCH}" >> "$LOG_FILE" 2>&1
+        ok "Репозиторий обновлён (ветка: ${BRANCH})"
     else
         step "Клонирование репозитория в ${WORK_DIR}..."
         git clone "$REPO_URL" "$WORK_DIR" >> "$LOG_FILE" 2>&1
@@ -216,9 +217,10 @@ rebuild_bot() {
     cd "$WORK_DIR" 2>/dev/null || fail "Директория ${WORK_DIR} не найдена. Сначала установите бота."
 
     step "Обновление кода из репозитория..."
+    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
     git fetch origin >> "$LOG_FILE" 2>&1
-    git reset --hard origin/main >> "$LOG_FILE" 2>&1
-    ok "Код обновлён"
+    git reset --hard "origin/${BRANCH}" >> "$LOG_FILE" 2>&1
+    ok "Код обновлён (ветка: ${BRANCH})"
 
     step "Остановка контейнера..."
     $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down >> "$LOG_FILE" 2>&1
