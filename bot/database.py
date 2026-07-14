@@ -1,7 +1,8 @@
 import aiosqlite
 from datetime import datetime
 
-DB_PATH = "requests.db"
+import os
+DB_PATH = os.path.join(os.getenv("DATA_DIR", "/app/data"), "requests.db")
 
 
 async def init_db() -> None:
