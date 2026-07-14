@@ -1,0 +1,17 @@
+services:
+  msgbot:
+    build: .
+    container_name: msgbot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - msgbot_data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  msgbot_data:
