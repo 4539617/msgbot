@@ -95,7 +95,8 @@ sync_repo() {
     if [ -d "$WORK_DIR/.git" ]; then
         step "Обновление репозитория..."
         cd "$WORK_DIR"
-        git pull origin main >> "$LOG_FILE" 2>&1
+        git fetch origin >> "$LOG_FILE" 2>&1
+        git reset --hard origin/main >> "$LOG_FILE" 2>&1
         ok "Репозиторий обновлён"
     else
         step "Клонирование репозитория в ${WORK_DIR}..."
@@ -215,7 +216,8 @@ rebuild_bot() {
     cd "$WORK_DIR" 2>/dev/null || fail "Директория ${WORK_DIR} не найдена. Сначала установите бота."
 
     step "Обновление кода из репозитория..."
-    git pull origin main >> "$LOG_FILE" 2>&1
+    git fetch origin >> "$LOG_FILE" 2>&1
+    git reset --hard origin/main >> "$LOG_FILE" 2>&1
     ok "Код обновлён"
 
     step "Остановка контейнера..."
