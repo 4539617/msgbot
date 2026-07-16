@@ -185,10 +185,10 @@ install_bot() {
     echo -e "\n${YELLOW}📋 Последние логи:${NC}"
     docker logs --tail=20 "$CONTAINER_NAME" 2>&1 || true
 
-    echo -e "\n${GREEN}💡 Полезные команды:${NC}"
-    echo -e "  Логи:       ${YELLOW}docker logs -f ${CONTAINER_NAME}${NC}"
-    echo -e "  Статус:     ${YELLOW}docker ps${NC}"
-    echo -e "  Перезапуск: ${YELLOW}$DOCKER_COMPOSE_CMD -f ${WORK_DIR}/${COMPOSE_FILE} restart${NC}"
+    echo -e "\n${GREEN}💡 Просмотр логов:${NC}"
+    echo -e "  В реальном времени: ${BLUE}docker logs -f ${CONTAINER_NAME}${NC}"
+    echo -e "  Последние 50 строк: ${BLUE}docker logs --tail=50 ${CONTAINER_NAME}${NC}"
+    echo -e "  Или выберите пункт ${BLUE}2) Логи${NC} в главном меню"
 
     read -p $'\nНажмите Enter для возврата в меню...'
 }
@@ -246,6 +246,11 @@ rebuild_bot() {
 
     echo -e "\n${YELLOW}📋 Последние логи:${NC}"
     docker logs --tail=20 "$CONTAINER_NAME" 2>&1 || true
+
+    echo -e "\n${GREEN}💡 Просмотр логов:${NC}"
+    echo -e "  В реальном времени: ${BLUE}docker logs -f ${CONTAINER_NAME}${NC}"
+    echo -e "  Последние 50 строк: ${BLUE}docker logs --tail=50 ${CONTAINER_NAME}${NC}"
+    echo -e "  Или выберите пункт ${BLUE}2) Логи${NC} в главном меню"
 
     read -p $'\nНажмите Enter для возврата в меню...'
 }
