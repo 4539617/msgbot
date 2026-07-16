@@ -48,6 +48,28 @@ async def create_request(
         return cursor.lastrowid  # type: ignore[return-value]
 
 
+async def get_user_requests(user_id: int) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM requests WHERE user_id = ? ORDER BY id DESC", (user_id,)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+
+
+async def get_user_active_request(user_id: int) -> dict | None:
+    """Возвращает активную заявку (new или in_work) если есть."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM requests WHERE user_id = ? AND status IN ('new', 'in_work') ORDER BY id DESC LIMIT 1",
+            (user_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+
 async def get_request(request_id: int) -> dict | None:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row

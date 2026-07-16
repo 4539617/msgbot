@@ -14,7 +14,10 @@ remove_kb = ReplyKeyboardRemove()
 # ── Главное меню пользователя ────────────────────────────────────────────────
 def main_menu_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="📋 Подать заявку")]],
+        keyboard=[
+            [KeyboardButton(text="📋 Подать заявку")],
+            [KeyboardButton(text="📂 Мои заявки")],
+        ],
         resize_keyboard=True,
     )
 
@@ -95,6 +98,20 @@ def admin_request_kb(request_id: int) -> InlineKeyboardMarkup:
             ],
         ]
     )
+
+
+# ── Список заявок пользователя ───────────────────────────────────────────────
+STATUS_ICONS = {"new": "🆕", "in_work": "🔧", "answered": "💬", "closed": "✅"}
+STATUS_LABELS = {"new": "Новая", "in_work": "В работе", "answered": "Отвечено", "closed": "Закрыта"}
+
+def user_requests_kb(requests: list[dict]) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for r in requests:
+        icon = STATUS_ICONS.get(r["status"], "❓")
+        label = f"{icon} #{r['id']} — {r['transport'][:15]} | {r['created_at']}"
+        builder.button(text=label, callback_data=f"my_request:{r['id']}")
+    builder.adjust(1)
+    return builder.as_markup()
 
 
 # ── Список заявок для admin /list ────────────────────────────────────────────

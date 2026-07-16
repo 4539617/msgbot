@@ -12,6 +12,9 @@ from bot.keyboards import (
     confirm_kb,
     remove_kb,
     admin_list_kb,
+    user_requests_kb,
+    STATUS_ICONS,
+    STATUS_LABELS,
 )
 from bot import database as db
 from bot.config import ADMIN_IDS
@@ -66,12 +69,75 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
     )
 
 
+# ── Мои заявки ────────────────────────────────────────────────────────────────
+@router.message(F.text == "📂 Мои заявки")
+async def my_requests(message: Message) -> None:
+    if message.from_user.id in ADMIN_IDS:  # type: ignore[union-attr]
+        await message.answer("⛔ Эта функция только для клиентов.")
+        return
+    requests = await db.get_user_requests(message.from_user.id)  # type: ignore[union-attr]
+    if not requests:
+        await message.answer("📭 У вас пока нет заявок.", reply_markup=main_menu_kb())
+        return
+    await message.answer(
+        f"📂 <b>Ваши заявки ({len(requests)}):</b>\nНажмите на заявку для подробностей.",
+        reply_markup=user_requests_kb(requests),
+        parse_mode="HTML",
+    )
+
+
+# ── Детали заявки пользователя ────────────────────────────────────────────────
+@router.callback_query(F.data.startswith("my_request:"))
+async def my_request_detail(callback: CallbackQuery) -> None:
+    request_id = int(callback.data.split(":")[1])  # type: ignore[union-attr]
+    req = await db.get_request(request_id)
+
+    # Защита — нельзя смотреть чужие заявки
+    if not req or req["user_id"] != callback.from_user.id:  # type: ignore[union-attr]
+        await callback.answer("❌ Заявка не найдена", show_alert=True)
+        return
+
+    icon = STATUS_ICONS.get(req["status"], "❓")
+    status_label = STATUS_LABELS.get(req["status"], req["status"])
+    media_ids_list = [m for m in (req["media_ids"] or "").split(",") if m]
+    media_note = f"📎 Медиафайлов: <b>{len(media_ids_list)}</b>" if media_ids_list else "📎 Медиа: <i>не прикреплено</i>"
+    reply_str = f"\n\n💬 <b>Ответ мастера:</b>\n{req['admin_reply']}" if req.get("admin_reply") else ""
+
+    text = (
+        f"📋 <b>Заявка #{req['id']}</b>  {icon} {status_label}\n\n"
+        f"📅 Дата: {req['created_at']}\n"
+        f"🚗 Транспорт: <b>{req['transport']}</b>\n"
+        f"🔧 Причина: <b>{req['reason']}</b>\n"
+        f"📝 Описание: {req['description']}\n"
+        f"{media_note}"
+        f"{reply_str}"
+    )
+    await callback.message.answer(text, parse_mode="HTML")  # type: ignore[union-attr]
+    await callback.answer()
+
+
 # ── Начало заявки (только не-админы) ─────────────────────────────────────────
 @router.message(F.text == "📋 Подать заявку")
 async def start_request(message: Message, state: FSMContext) -> None:
     if message.from_user.id in ADMIN_IDS:  # type: ignore[union-attr]
         await message.answer("⛔ Администраторы не могут подавать заявки.")
         return
+
+    # Проверка активной заявки
+    active = await db.get_user_active_request(message.from_user.id)  # type: ignore[union-attr]
+    if active:
+        icon = STATUS_ICONS.get(active["status"], "❓")
+        status_label = STATUS_LABELS.get(active["status"], active["status"])
+        await message.answer(
+            f"⏳ У вас уже есть активная заявка:\n\n"
+            f"📋 <b>Заявка #{active['id']}</b>  {icon} {status_label}\n"
+            f"🚗 {active['transport']} — {active['reason']}\n"
+            f"📅 {active['created_at']}\n\n"
+            f"Новую заявку можно подать после закрытия текущей.",
+            parse_mode="HTML",
+        )
+        return
+
     await state.clear()
     await state.set_state(RequestFSM.transport)
     await message.answer(
