@@ -11,6 +11,7 @@ from bot.keyboards import (
     skip_media_kb,
     confirm_kb,
     remove_kb,
+    admin_list_kb,
 )
 from bot import database as db
 from bot.config import ADMIN_IDS
@@ -33,6 +34,30 @@ class RequestFSM(StatesGroup):
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext) -> None:
     await state.clear()
+    user_id = message.from_user.id  # type: ignore[union-attr]
+
+    # Администратор → показываем список заявок
+    if user_id in ADMIN_IDS:
+        requests = await db.get_all_requests()
+        if not requests:
+            await message.answer(
+                "🛠 <b>Панель администратора</b>\n\n📭 Заявок пока нет.",
+                parse_mode="HTML",
+            )
+        else:
+            status_icons = {"new": "🆕", "in_work": "🔧", "answered": "💬", "closed": "✅"}
+            lines = []
+            for r in requests[:20]:
+                icon = status_icons.get(r["status"], "❓")
+                lines.append(f"{icon} <b>#{r['id']}</b> — {r['transport']} | {r['reason'][:20]} | {r['created_at']}")
+            text = "🛠 <b>Панель администратора</b>\n\n" + "\n".join(lines)
+            if len(requests) > 20:
+                text += f"\n\n<i>...и ещё {len(requests) - 20} заявок. Используйте /list</i>"
+            from bot.keyboards import admin_list_kb
+            await message.answer(text, reply_markup=admin_list_kb(requests[:20]), parse_mode="HTML")
+        return
+
+    # Обычный пользователь → главное меню
     await message.answer(
         "👋 Привет! Я бот для приёма заявок на <b>ремонт батареи / замену BMS</b> "
         "электротранспорта.\n\nНажми кнопку ниже, чтобы подать заявку.",
@@ -41,9 +66,12 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
     )
 
 
-# ── Начало заявки ─────────────────────────────────────────────────────────────
+# ── Начало заявки (только не-админы) ─────────────────────────────────────────
 @router.message(F.text == "📋 Подать заявку")
 async def start_request(message: Message, state: FSMContext) -> None:
+    if message.from_user.id in ADMIN_IDS:  # type: ignore[union-attr]
+        await message.answer("⛔ Администраторы не могут подавать заявки.")
+        return
     await state.clear()
     await state.set_state(RequestFSM.transport)
     await message.answer(
